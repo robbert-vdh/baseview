@@ -5,13 +5,13 @@ use winapi::um::combaseapi::CoCreateGuid;
 use winapi::um::winuser::{
     AdjustWindowRectEx, CreateWindowExW, DefWindowProcW, DestroyWindow, DispatchMessageW,
     GetDpiForWindow, GetMessageW, GetWindowLongPtrW, LoadCursorW, PostMessageW, RegisterClassW,
-    ReleaseCapture, SetCapture, SetProcessDpiAwarenessContext, SetTimer, SetWindowLongPtrW,
-    SetWindowPos, TranslateMessage, UnregisterClassW, CS_OWNDC, GET_XBUTTON_WPARAM, GWLP_USERDATA,
-    IDC_ARROW, MSG, SWP_NOMOVE, SWP_NOZORDER, WHEEL_DELTA, WM_CHAR, WM_CLOSE, WM_CREATE,
-    WM_DPICHANGED, WM_INPUTLANGCHANGE, WM_KEYDOWN, WM_KEYUP, WM_LBUTTONDOWN, WM_LBUTTONUP,
-    WM_MBUTTONDOWN, WM_MBUTTONUP, WM_MOUSEHWHEEL, WM_MOUSEMOVE, WM_MOUSEWHEEL, WM_NCDESTROY,
-    WM_RBUTTONDOWN, WM_RBUTTONUP, WM_SHOWWINDOW, WM_SIZE, WM_SYSCHAR, WM_SYSKEYDOWN, WM_SYSKEYUP,
-    WM_TIMER, WM_USER, WM_XBUTTONDOWN, WM_XBUTTONUP, WNDCLASSW, WS_CAPTION, WS_CHILD,
+    ReleaseCapture, SetCapture, SetCursor, SetProcessDpiAwarenessContext, SetTimer,
+    SetWindowLongPtrW, SetWindowPos, TranslateMessage, UnregisterClassW, CS_OWNDC,
+    GET_XBUTTON_WPARAM, GWLP_USERDATA, MSG, SWP_NOMOVE, SWP_NOZORDER, WHEEL_DELTA, WM_CHAR,
+    WM_CLOSE, WM_CREATE, WM_DPICHANGED, WM_INPUTLANGCHANGE, WM_KEYDOWN, WM_KEYUP, WM_LBUTTONDOWN,
+    WM_LBUTTONUP, WM_MBUTTONDOWN, WM_MBUTTONUP, WM_MOUSEHWHEEL, WM_MOUSEMOVE, WM_MOUSEWHEEL,
+    WM_NCDESTROY, WM_RBUTTONDOWN, WM_RBUTTONUP, WM_SHOWWINDOW, WM_SIZE, WM_SYSCHAR, WM_SYSKEYDOWN,
+    WM_SYSKEYUP, WM_TIMER, WM_USER, WM_XBUTTONDOWN, WM_XBUTTONUP, WNDCLASSW, WS_CAPTION, WS_CHILD,
     WS_CLIPSIBLINGS, WS_MAXIMIZEBOX, WS_MINIMIZEBOX, WS_POPUPWINDOW, WS_SIZEBOX, WS_VISIBLE,
     XBUTTON1, XBUTTON2,
 };
@@ -29,8 +29,8 @@ use raw_window_handle::{HasRawWindowHandle, RawWindowHandle, Win32Handle};
 const BV_WINDOW_MUST_CLOSE: UINT = WM_USER + 1;
 
 use crate::{
-    Event, MouseButton, MouseEvent, PhyPoint, PhySize, ScrollDelta, WindowEvent, WindowHandler,
-    WindowInfo, WindowOpenOptions, WindowScalePolicy,
+    Event, MouseButton, MouseCursor, MouseEvent, PhyPoint, PhySize, ScrollDelta, WindowEvent,
+    WindowHandler, WindowInfo, WindowOpenOptions, WindowScalePolicy,
 };
 
 use super::keyboard::KeyboardState;
@@ -366,7 +366,7 @@ unsafe fn register_wnd_class() -> ATOM {
         cbClsExtra: 0,
         cbWndExtra: 0,
         hIcon: null_mut(),
-        hCursor: LoadCursorW(null_mut(), IDC_ARROW),
+        hCursor: null_mut(), // If the class cursor is not NULL, the system restores the class cursor each time the mouse is moved.
         hbrBackground: null_mut(),
         lpszMenuName: null_mut(),
     };
@@ -618,7 +618,10 @@ impl Window {
     }
 
     pub fn set_mouse_cursor(&mut self, cursor: MouseCursor) {
-        //@TODO: Implement
+        unsafe {
+            let cursor = LoadCursorW(null_mut(), cursor.to_windows_cursor());
+            SetCursor(cursor);
+        }
     }
 
     pub fn close(&mut self) {
