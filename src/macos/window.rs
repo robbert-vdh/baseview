@@ -299,11 +299,7 @@ impl Window {
         window_handle
     }
 
-    pub fn close(&mut self) {
-        self.close_requested = true;
-    }
-
-    pub fn set_mouse_cursor(&self, cursor: MouseCursor) {
+    pub fn set_mouse_cursor(&mut self, cursor: MouseCursor) {
         let native_cursor = Cursor::from(cursor);
         unsafe {
             let bounds: NSRect = msg_send![self.ns_view as id, bounds];
@@ -313,6 +309,10 @@ impl Window {
                 cursor:cursor
             ];
         }
+    }
+
+    pub fn close(&mut self) {
+        self.close_requested = true;
     }
 
     #[cfg(feature = "opengl")]
